@@ -585,6 +585,15 @@ saveRDS(matricom_patterns, "matricom_patterns.RDS")
 ---
 
 ### SECTION 2: PLOTTING
+Load RDS if saved previously, or load the one provided by us, if you directly skipped to this part.
+
+```R
+# Your own, generated from the previous step
+matricom_patterns <- readRDS("matricom_patterns.RDS")
+
+# The one from us
+matricom_patterns <- readRDS("matricom_patterns/matricom_patterns.RDS")
+```
 
 Plot of the network
 ```R
