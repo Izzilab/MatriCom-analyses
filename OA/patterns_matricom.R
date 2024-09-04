@@ -528,12 +528,9 @@ saveRDS(matricom_patterns, "matricom_patterns.RDS")
 
 # SECTION 2: PLOTTING
 #matricom_patterns <- readRDS("matricom_patterns.RDS")
-#matricom_patterns_re <- readRDS("matricom_patterns_re.RDS")
+#matricom_patterns <- readRDS("matricom_patterns/matricom_patterns.RDS")
 
 matricom_patterns$nondirectional.patterns
-#matricom_patterns_re$nondirectional.patterns
-
-#matricom_patterns <- matricom_patterns_re
 
 # plot of the network
 fin.net <- matricom_patterns$nondirectional.patterns
