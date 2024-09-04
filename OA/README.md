@@ -8,24 +8,24 @@ The workflow is divided into three sections.
 
 ### Libraries needed
 ```R
-library(dplyr)
-library(data.table)
-library(Seurat)
-library(EnsDb.Hsapiens.v79)
-library(readxl)
-library(igraph)
-library(Matrix)
-library(reshape2)
-library(ggplot2)
-library(ggsci)
-library(ggridges)
-library(corrplot)
-library(pheatmap)
-library(scales)
-library(uwot)
-library(circlize)
-library(viridis)
-library(gprofiler2)
+library("dplyr")
+library("data.table")
+library("Seurat")
+library("EnsDb.Hsapiens.v79")
+library("readxl")
+library("igraph")
+library("Matrix")
+library("reshape2")
+library("ggplot2")
+library("ggsci")
+library("ggridges")
+library("corrplot")
+library("pheatmap")
+library("scales")
+library("uwot")
+library("circlize")
+library("viridis")
+library("gprofiler2")
 ```
 
 ### Set up
@@ -96,7 +96,9 @@ obj <- l %>% group_by(organ) %>% do(model = aov(v~compartment, data = .))
 lapply(obj$model, summary)
 ```
 ![Fig1](./figs/fig1.png)
-**Figure 1. Comparative data analysis.** Preview of ggplot's output.
+*Figure 1. Comparative data analysis.* Preview of ggplot's output.
+
+---
 
 ### SECTION 1: DATA ANALYSIS
 If you are only interested in the final results and plotting, skip to [Section 2](#section-2-plotting).
@@ -124,8 +126,7 @@ Use default MatriCom settings for both:
   * Extracellular (Non-matrisome)
 
 Save results in `XLSX` format, naming the files after the respective dataset, in
-folders named [TS-1.30](./TS-1.30/) and [THPA-Census-1.30](./THPA-Census-1.30/),
-respectively for TS and THPA.
+folders named [TS-1.30](./TS-1.30/) and [THPA-Census-1.30](./THPA-Census-1.30/).
 In addition, for THPA results, rename the following, to be consistent with TS:
 
 *  Pbmc.XLSX -> Blood.XLSX
@@ -135,9 +136,8 @@ In addition, for THPA results, rename the following, to be consistent with TS:
 *  Skeletal_muscle.XLSX -> Muscle.XLSX
 *  Breast.XLSX -> Mammary.XLSX
 
-For users' convenience, these have been downloaded by us and are available in their
-respective folders. The sheet that will be processed is called "communication
-network".
+For users' convenience, these have been processed and downloaded by us and are available in their
+respective folders. The sheet that will be processed is called "communication network".
 
 Process Tabula Sapiens data from its folder
 ```R
@@ -289,7 +289,11 @@ for(i in l){
 tab2 <- bind_rows(imp) #20 tissues (91%) mark positive for at least one pattern in THPA
 ```
 
-Get `Tabula_Sapiens_metadata.csv` from here: https://figshare.com/articles/dataset/Tabula_Sapiens_release_1_0/14267219. The lines below will do it automatically for you:
+Tabula sapiens metadata can be obtained from here:
+* url: https://figshare.com/articles/dataset/Tabula_Sapiens_release_1_0/14267219.
+* File: `Tabula_Sapiens_metadata.csv`
+
+These lines below will do it automatically for you:
 ```R
 setwd(work.d)
 www <- "https://figshare.com/ndownloader/files/40066912"
@@ -454,11 +458,11 @@ z <- simplify(graph_from_data_frame(s1[,c(18,19)],directed = F),remove.loops = F
 m4 <- as.data.frame(as.matrix(as_adj(z)))
 ```
 
-TF2DNA Database, download data from here:
+TF2DNA Database can be obtained from here:
 * url: https://www.fiserlab.org/tf2dna_db/downloads.html
-* File: TF target files [1.9G]  
-Download and untar, only keep the folder "Homo-sapiens_theoretical_TF2DNA".
-The lines below will do this automatically for you:
+* File: `TF target files`. Note that this is 1.9 GiB! Download, untar, then only keep the folder `/pscan_files/Homo-sapiens_theoretical_TF2DNA`.
+
+These lines below will do this automatically for you:
 ```R
 setwd(work.d)
 www <- "http://fiserlab.org/pscan_files.tar.gz"
@@ -501,11 +505,12 @@ for(i in 1:nrow(p)){
 }
 ```
 
-We will also counter-check into http://tf.liclab.net/TFTG/, by using the TF-
-target table annotated from TTRUST ("Curated" file).
+Obtain the TF-target table annotated from TTRUST:
+* url: http://tf.liclab.net/TFTG/ 
+* File: `Curate.txt`. Upstream link seems to be unavailable at the moment, so we provide it as a zipped file.
 
+We will also counter-check against the TF-target table annotated from TTRUST:
 ```R
-# Upstream link seems to be unavailable at the moment, so we provide the zipped file
 unzip("Curate.txt.zip")
 
 lst2 <- bind_rows(lst2) #all pairs found common TFs (length(unique(lst2$pattern)))
@@ -541,10 +546,11 @@ for(i in unique(lst2$pattern)){
 fin <- bind_rows(fin) #all pairs found common matching TFs (length(unique(fin$pattern)))
 ```
 
-Finally, we will use the supplementary table from Lambert et al. to annotate
-TF families (https://www.cell.com/cell/fulltext/S0092-8674(18)30106-5#supplementaryMaterial)
-This (mmc2.xlsx) should be downloaded manually.
+Get manually the supplementary table from Lambert et al:
+* url: https://www.cell.com/cell/fulltext/S0092-8674(18)30106-5#supplementaryMaterial
+* File: `mmc2.xlsx`
 
+We will use the supplementary table to annotate TF families:
 ```R
 fams <- read_xlsx("mmc2.xlsx",sheet="Table S1. Related to Figure 1B")
 fams <- as.data.frame(fams[-1,c(2,3)])
@@ -575,6 +581,8 @@ matricom_patterns <- list(
 
 saveRDS(matricom_patterns, "matricom_patterns.RDS")
 ```
+
+---
 
 ### SECTION 2: PLOTTING
 
@@ -622,7 +630,7 @@ corrplot(m, method="color")
 |---|---|
 |![](./figs/network.png) |![](./figs/corr.png)|  
 
-**Figure 2. Network and Categories.**
+*Figure 2. Network and Categories.*
 
 Plot of compartment interactions
 ```R
@@ -645,7 +653,7 @@ chordDiagram(matricom_patterns$compartment.com.thpa,grid.col = col,col = matrico
 |---|---|
 |![](./figs/tabsap.png) |![](./figs/tpha.png)|  
 
-**Figure 3. Compartment interactions.**
+*Figure 3. Compartment interactions.*
 
 Plot of tissue/organ correlation by patterns
 ```R
@@ -689,9 +697,9 @@ pheatmap(mat2,cellwidth=4,cellheight=4,fontsize=4,cluster_rows = F, cluster_cols
 |---|---|---|
 |![](./figs/hmcorr.png)|![](./figs/hmph.png)|![](./figs/hmmat2.png)|
 
-**Figure 4. Heatmaps.**
+*Figure 4. Heatmaps.*
 
-Plots of pleiotropy and specialization
+Plots of pleiotropy and specialization:
 ```R
 m <- matricom_patterns$examples$COL6A1.CD44
 m <- m[!(rownames(m)%in%"not.available"),!(colnames(m)%in%"not.available")]
@@ -716,7 +724,7 @@ pheatmap(m,cluster_rows = F,cluster_cols = F,color=c("white","#FE6053"))
 |---|---|---|
 |![](./figs/COL6A1.CD44.png)|![](./figs/CD44.HYAL2.png)|![](./figs/SELP.COL18A1.png)|
 
-**Figure 5. Pleiotropy and specialization**
+*Figure 5. Pleiotropy and specialization*
 
 Plots of TFs and TF families
 ```R
@@ -791,4 +799,4 @@ pheatmap(enlist,fontsize = 5,color=colorRampPalette(c("white", "red"))(50))
 |---|---|
 |![](./figs/gostres.png)|![](./figs/enlist.png)|
 
-**Figure 6. TFs and TF families**
+*Figure 6. TFs and TF families*
