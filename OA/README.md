@@ -1,5 +1,10 @@
 ## Matricom Patterns in open access (OA) data
-The whole list of steps discussed below is included in a single file, called [patterns_matricom.R](patterns_matricom.R).
+All steps discussed below are included in a **single script**, called [patterns_matricom.R](patterns_matricom.R).
+
+The workflow is divided into three sections.  
+* [Section 0: Comparative data analysis](#section-0-comparative-data-analysis). Comparative expression between matrisome and non-matrisome genes from Tabula Sapiens data.  
+* [Section 1: Data analyses](#section-1-data-analysis). Process the open access data from Tabula Sapiens and The Human Protein Atlas by MatriCom, then look for "patterns" pairs (gene1-gene2 or vice versa) that are expressed across multiple organs.  
+* [Section 2: Plotting](#section-2-plotting): Visualize various aspects of the results, such as network, interactions between compartments, tissue/organ patterns correlation and more.  
 
 ### Libraries needed
 ```R
