@@ -6,6 +6,8 @@ The workflow is divided into three sections.
 * [Section 1: Data analyses](#section-1-data-analysis). Process the open access data from Tabula Sapiens and The Human Protein Atlas by MatriCom, then look for "patterns" pairs (gene1-gene2 or vice versa) that are expressed across multiple organs.  
 * [Section 2: Plotting](#section-2-plotting): Visualize various aspects of the results, such as network, interactions between compartments, tissue/organ patterns correlation and more.  
 
+Several files should be downloaded, and their checksums can be found in [md5sum.txt](./md5sum.txt).
+
 ### Libraries needed
 ```R
 library("dplyr")
@@ -52,6 +54,8 @@ www <- "https://datasets.cellxgene.cziscience.com/981bcf57-30cb-4a85-b905-e04373
 download.file(www, "all_cells.rds")
 tabsap <- readRDS("all_cells.rds")
 ```
+  
+**NOTE!** You will need about 64GiB of RAM for this file to load.
 
 This file from the MatriCom app, contains cell compartment information for genes and should be loaded as follows :
 ```R
@@ -217,7 +221,7 @@ ecount(pats)
 Here, we will analyze the matrisome features of the common patterns. The
 Matrisome "masterlist" should be downloaded from:
 * url: https://sites.google.com/uic.edu/matrisome/matrisome-annotations/homo-sapiens
-* file: Hs_Matrisome_Masterlist_Naba et al_2012.xlsx
+* file: "Download the complete Homo sapiens matrisome list (rev. 2014)", save it as `Hs_Matrisome_Masterlist_Naba et al_2012.xlsx`
 ```R
 pats <- as.data.frame(as_edgelist(pats))
 names(pats) <- c("Gene1","Gene2")
@@ -548,7 +552,7 @@ fin <- bind_rows(fin) #all pairs found common matching TFs (length(unique(fin$pa
 
 Get manually the supplementary table from Lambert et al:
 * url: https://www.cell.com/cell/fulltext/S0092-8674(18)30106-5#supplementaryMaterial
-* File: `mmc2.xlsx`
+* File: "Spreadsheet (5.81 MB) Document S1. Tables S1–S4", save as `mmc2.xlsx`
 
 We will use the supplementary table to annotate TF families:
 ```R
