@@ -9,20 +9,21 @@ library("KEGGgraph")
 library("org.Hs.eg.db") 
 library("CellChat")
 library("data.table")
+library("gsheet")
+library("pathview")
 library("readxl")
 
 # Set dirs.
 work.d <- setwd(".") # Change as needed
-work.d <- "/home/petrov/Projects/matricom-analysis/CS/"
 setwd(work.d)
 
 # Everything downloaded or created by the script will appear in one of the three
 # folders specified below.
-rds.d <- paste0(work.d, "/downloaded")
-ref.d <- paste0(work.d, "/reference-lists")
-out.d <- paste0(work.d, "/results-output")
+dln.d <- paste0(work.d, "/", "downloaded")
+ref.d <- paste0(work.d, "/", "reference-lists")
+out.d <- paste0(work.d, "/", "results-output")
 
-dir.create(rds.d)
+dir.create(dln.d)
 dir.create(ref.d)
 dir.create(out.d)
 
@@ -34,8 +35,8 @@ options(timeout=1800)
 # Prepare Azimuth kidney metadata for full scRNA-seq dataset
 # Upstream URL: https://azimuth.hubmapconsortium.org/references/#Human%20-%20Kidney
 www <- "https://seurat.nygenome.org/azimuth/demo_datasets/kidney_demo_stewart.rds"
-download.file(www, paste0(rds.d, "/", "kidney_demo_stewart.rds"))
-meta <- readRDS(paste0(rds.d, "/", "kidney_demo_stewart.rds"))
+download.file(www, paste0(dln.d, "/", "kidney_demo_stewart.rds"))
+meta <- readRDS(paste0(dln.d, "/", "kidney_demo_stewart.rds"))
 meta <- data.frame(meta@meta.data)
 
 # Save metadata?
@@ -54,7 +55,7 @@ write.csv(meta, paste0(ref.d, "/", "Azimuth kidney_demo_Seurat metadata.csv"))
 # Save the file as "HuBMAP Kidney Case Study Text_v1.XLSX" in the currecnt work dir
 kidney <- as.data.frame(read_excel("HKid_default_MatriCom network.XLSX", sheet = "communication network"))
 
-######## REMOVE WHEN FIXED IN MATRICOM
+######## TODO: TENPORARY FIX, REMOVE WHEN FIXED IN MATRICOM ######################
 names(kidney)[names(kidney) == "Type of communication"] <- "Type.of.communication"
 ##################################################################################
 
@@ -65,10 +66,14 @@ write.csv(gloss, paste0(ref.d, "/", "HuBMAP kidney_base lookup table.csv"))
 
 # ECM-receptor interaction - Homo sapiens (human)
 #
-# KEGG-hsa04512.xml was used for omnibus construction at 2023/09/14
+# KEGG hsa04512.xml was used for omnibus construction at 2023/09/14
 # Downloadable from https://www.kegg.jp/pathway/hsa04512
-# Download > KGML > Save as "KEGG-hsa04512.xml"
-kg <- parseKGML2DataFrame("KEGG-hsa04512.xml")
+# Download > KGML > Save as "hsa04512.xml"
+#
+# This will do it automatically for you:
+download.kegg(pathway.id = "04512", species = "hsa", kegg.dir = dln.d, file.type = "xml")
+kg <- parseKGML2DataFrame(paste0(dln.d, "/", "hsa04512.xml"))
+
 kg$from <- gsub("hsa:","",kg$from)
 kg$to <- gsub("hsa:","",kg$to)
 kg$order <- c(1:nrow(kg))
@@ -111,23 +116,38 @@ kg_itg <- separate_wider_delim(kg_itg, cols=3, delim="_", names=c("ReceptorA", "
 kg_itg$Ligand_Receptor <- paste0(kg_itg$Ligand,"_",kg_itg$Receptor)
 dim(kg_itg) #421 interactions
 
-# ??? RENAME VARIABLE TO BE ON PAR WITH WHAT IS LATER ??????????????????????????
-
 # Save integrin interactions?
 write.csv(kg_itg, paste0(ref.d, "/", "KEGG-hsa04512_ITG.csv"), row.names=F)
 
 ### CASE STUDY PART 1 ##########################################################
 #
-# TODO: make this automatic from the source input
-#
 # Matrisome gene list. Human and mouse matrisome annotations from the Matrisome
-# Project website were downloaded:
-#   https://sites.google.com/uic.edu/matrisome/matrisome-annotations/homo-sapiens
-#   https://sites.google.com/uic.edu/matrisome/matrisome-annotations/mus-musculus
+# Project website can be downloaded manually from:
+#   url: https://sites.google.com/uic.edu/matrisome/matrisome-annotations/homo-sapiens
+#   file: "Download the complete Homo sapiens matrisome list (rev. 2014)"
+#   save: Download as Microsoft Excel
 #
-# Human and mouse matrisome gene lists were combined, keeping the category and
-# division columns. We provide this file with the script for users' convenience.
-m.list <- read.csv("MATRISOME_Hs-Mm_masterlist.csv", header=T)
+#   url: https://sites.google.com/uic.edu/matrisome/matrisome-annotations/mus-musculus
+#   file: Download the complete Mus musculus matrisome list (rev. 2014)
+#   save: Download as Microsoft Excel
+#
+# This is the manual way, but we do it direcly
+#hs <- as.data.frame(read_excel(paste0(dln.d, "/Hs_Matrisome_Masterlist_Naba et al_2012.xlsx"), sheet = "Hs_Matrisome_Masterlist"))
+#mm <- as.data.frame(read_excel(paste0(dln.d, "/Mm_Matrisome_Masterlist_Naba et al_2012.xlsx"), sheet = "Mm_Matrisome_Masterlist"))
+
+# This will obtain the sheets automatically
+hs <- as.data.frame(gsheet2tbl("https://docs.google.com/spreadsheets/d/1GwwV3pFvsp7DKBbCgr8kLpf8Eh_xV8ks/edit?usp=sharing&ouid=102352631360008021621&rtpof=true&sd=true", sheetid = "Hs_Matrisome_Masterlist"))
+mm <- as.data.frame(gsheet2tbl("https://docs.google.com/spreadsheets/d/1Te6n2q_cisXeirzBClK-VzA6T-zioOB5/edit?usp=sharing&ouid=102352631360008021621&rtpof=true&sd=true", sheetid = "Mm_Matrisome_Masterlist"))
+
+# Human and mouse matrisome gene lists are combined, keeping the category and
+# division columns.
+hs <- hs[, c(1:3)]
+mm <- mm[, c(1:3)]
+mm[, 3] <- toupper(mm[, 3])
+m.list <- rbind(hs, mm)
+m.list <- unique(m.list)
+colnames(m.list) <- c("Division", "Category", "Gene_Symbol")
+write.csv(m.list, paste0(ref.d, "/", "MATRISOME_Hs-Mm_masterlist.csv"), quote = F, row.names = F)
 
 # Load the already created reference lists from file? 
 # gloss <- read.csv(paste0(ref.d, "/", "HuBMAP kidney_base lookup table.csv")) #cell type glossary
@@ -356,7 +376,6 @@ for(i in 1:nrow(rcpt)){
 }
 rcpt$freq.Expr<- rcpt$n.Expr / sum(rcpt$n.Expr)
 write.csv(rcpt, paste0(out.d, "/", "HKid_default_Fib Receptors.csv"), row.names=F) #Supplementary Table S5B
-
 
 ## Receiver Contribution ----
 

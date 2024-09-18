@@ -1,2 +1,4 @@
-69d13f1d6b218e372b95775f228bf65a  KEGG-hsa04512.xml
+# MD5SUMs for downloaded files:
+
+69d13f1d6b218e372b95775f228bf65a  hsa04512.xml
 2b374d284a74d2ad77a7a02f77b3bc49  kidney_demo_stewart.rds
