@@ -10,7 +10,6 @@ library("org.Hs.eg.db")
 library("CellChat")
 library("data.table")
 library("gsheet")
-library("pathview")
 library("readxl")
 
 # Set dirs.
@@ -70,9 +69,8 @@ write.csv(gloss, paste0(ref.d, "/", "HuBMAP kidney_base lookup table.csv"))
 # Downloadable from https://www.kegg.jp/pathway/hsa04512
 # Download > KGML > Save as "hsa04512.xml"
 #
-# This will do it automatically for you:
-download.kegg(pathway.id = "04512", species = "hsa", kegg.dir = dln.d, file.type = "xml")
-kg <- parseKGML2DataFrame(paste0(dln.d, "/", "hsa04512.xml"))
+# We include the file with the script
+kg <- parseKGML2DataFrame("hsa04512.xml")
 
 kg$from <- gsub("hsa:","",kg$from)
 kg$to <- gsub("hsa:","",kg$to)
@@ -147,6 +145,10 @@ mm[, 3] <- toupper(mm[, 3])
 m.list <- rbind(hs, mm)
 m.list <- unique(m.list)
 colnames(m.list) <- c("Division", "Category", "Gene_Symbol")
+
+sort(unique(m.list$Category))
+sort(unique(kidney$Matrisome.Category.Gene1))
+
 write.csv(m.list, paste0(ref.d, "/", "MATRISOME_Hs-Mm_masterlist.csv"), quote = F, row.names = F)
 
 # Load the already created reference lists from file? 

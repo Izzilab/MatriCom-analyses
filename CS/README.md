@@ -27,7 +27,6 @@ library("org.Hs.eg.db")
 library("CellChat")
 library("data.table")
 library("gsheet")
-library("pathview")
 library("readxl")
 ```
 
@@ -63,19 +62,18 @@ Prepare glossary of matched cell type labels from Azimuth metadata and MatriCom 
 * use Option 2 to select Collection > Other open access data  
   Dataset > Kidney (Stewart et al., 2019)  
 
-Save the file as `HuBMAP Kidney Case Study Text_v1.XLSX` in the folder where `kidney.R` script is (current work dir). **For user convenience, we provide the file** Now, import the data and prepare glossary:
+Save the file as `HuBMAP Kidney Case Study Text_v1.XLSX` in the folder where `kidney.R` script is (current work dir). **For user convenience, we provide the file.** Now, import the data and prepare glossary:
 
 ```R
 kidney <- as.data.frame(read_excel("HKid_default_MatriCom network.XLSX", sheet = "communication network"))
 gloss <- data.frame(kid = sort(unique(kidney$Population1)), meta = sort(unique(meta$celltype)))
 write.csv(gloss, paste0(ref.d, "/", "HuBMAP kidney_base lookup table.csv"))
 ```
-Prepare Edge list (gene pairs) from KEGG ECM-receptor interaction pathway map ([hsa04512](https://www.kegg.jp/pathway/hsa04512)), used to identify ECM-receptor gene pairs and assign sender/receiver populations and ligand/receptor genes for non-directional pairs in MatriCom communication network table.
+Prepare Edge list (gene pairs) from KEGG ECM-receptor interaction pathway map ([hsa04512](https://www.kegg.jp/pathway/hsa04512)), used to identify ECM-receptor gene pairs and assign sender/receiver populations and ligand/receptor genes for non-directional pairs in MatriCom communication network table. KEGG hsa04512.xml was used for omnibus construction at 2023/09/14. We include the file with the script.
 ```R
 # Download
-download.kegg(pathway.id = "04512", species = "hsa", kegg.dir = dln.d, file.type = "xml")
+kg <- parseKGML2DataFrame("hsa04512.xml")
 
-kg <- parseKGML2DataFrame(paste0(dln.d, "/", "hsa04512.xml"))
 kg$from <- gsub("hsa:","",kg$from)
 kg$to <- gsub("hsa:","",kg$to)
 kg$order <- c(1:nrow(kg))
@@ -149,6 +147,10 @@ mm[, 3] <- toupper(mm[, 3])
 m.list <- rbind(hs, mm)
 m.list <- unique(m.list)
 colnames(m.list) <- c("Division", "Category", "Gene_Symbol")
+
+sort(unique(m.list$Category))
+sort(unique(kidney$Matrisome.Category.Gene1))
+
 write.csv(m.list, paste0(out.d, "/", "MATRISOME_Hs-Mm_masterlist.csv"), quote = F, row.names = F)
 ```
 
