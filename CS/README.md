@@ -1,7 +1,7 @@
 ## MatriCom Case Study: communication networks of the kidney matrisome
 All steps discussed below are included in a **single script**: [kidney.R](kidney.R).
 
-To demonstrate how MatriCom can be used to interrogate biological systems, we performed a case study of matrisome communication networks in the human kidney using the *Kidney ([Stewart et al., Science 2019](https://www.science.org/doi/10.1126/science.aat5031))* open-access dataset from the [Azimuth](https://azimuth.hubmapconsortium.org/references/#Human%20-%20Kidney) app collection (HuBMAP). The sample was processed with MatriCom using original sample annotations and all default query parameters and filters.
+To demonstrate how MatriCom can be used to interrogate biological systems, we performed a case study of matrisome communication networks in the human kidney using the *Kidney ([Stewart et al., Science 2019](https://www.science.org/doi/10.1126/science.aat5031))* open-access dataset from the [Azimuth](https://azimuth.hubmapconsortium.org/references/#Human%20-%20Kidney) app (HuBMAP). The sample was processed with MatriCom using original sample annotations and all default query parameters and filters.
 
 The workflow is divided into a preparation step, followed by a four-part case study (Figure 1):
 * **[Part 0 - Build reference lists](#build-reference-lists):** glossary of harmonized cell type labels and ECM-receptor gene pairs lists
@@ -77,7 +77,7 @@ kidney <- as.data.frame(read_excel("HKid_default_MatriCom network.XLSX", sheet =
 gloss <- data.frame(kid = sort(unique(kidney$Population1)), meta = sort(unique(meta$celltype)))
 write.csv(gloss, paste0(ref.d, "/", "HuBMAP kidney_base lookup table.csv"))
 ```
-**Prepare gene pairs from KEGG ECM-receptor interaction pathway:** To identify ECM-receptor communication pairs in MatriCom output, import the *ECM-receptor interaction* pathway map([hsa04512](https://www.kegg.jp/pathway/hsa04512) from KEGG and extract gene pairs. Note that the directionality column in ECM-receptor reference list is used to designate the ligand or receptor gene and, likewise, the sender or receiver population within each pair returned by MatriCom.
+**Prepare gene pairs from KEGG ECM-receptor interaction pathway:** To identify ECM-receptor communication pairs in MatriCom output, import the *ECM-receptor interaction* pathway map ([hsa04512](https://www.kegg.jp/pathway/hsa04512)) from KEGG and extract gene pairs. Note that the directionality column in ECM-receptor reference list is used to designate the ligand or receptor gene and, likewise, the sender or receiver population within each pair returned by MatriCom.
 ```R
 # Download
 download.kegg(pathway.id = "04512", species = "hsa", kegg.dir = dln.d, file.type = "xml")
