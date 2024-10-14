@@ -1,17 +1,17 @@
-## MatriCom Case Study: communication networks of the kidney matrisome
-All steps discussed below are included in a **single script**: [kidney.R](kidney.R).
+## MatriCom case study: Matrisome communication systems within the kidney
+All steps discussed below are included in a **single script**: [kidney.R](kidney.R)
 
-To demonstrate how MatriCom can be used to interrogate biological systems, we performed a case study of matrisome communication networks in the human kidney using the *Kidney ([Stewart et al., Science 2019](https://www.science.org/doi/10.1126/science.aat5031))* open-access dataset from the [Azimuth](https://azimuth.hubmapconsortium.org/references/#Human%20-%20Kidney) app (HuBMAP). The sample was processed with MatriCom using original sample annotations and all default query parameters and filters.
+To demonstrate how MatriCom can be used to interrogate biological systems, we performed a case study of matrisome communication networks in the human kidney using the *Kidney ([Stewart et al., Science 2019](https://www.science.org/doi/10.1126/science.aat5031))* open-access dataset from the [Azimuth](https://azimuth.hubmapconsortium.org/references/#Human%20-%20Kidney) app collection. The dataset was processed with MatriCom using original sample annotations and all default query parameters and filters.
 
 The workflow is divided into a preparation step, followed by a four-part case study (Figure 1):
-* **[Part 0 - Build reference lists](#build-reference-lists):** glossary of harmonized cell type labels and ECM-receptor gene pairs lists
-* **[Part 1 - Full kidney communication network](#case-study-part-1):** all communication pairs detected by default MatriCom analysis
-* **[Part 2 - Fibroblast communications](#case-study-part-2):** subset of communication pairs established by fibroblasts and their partners
-* **[Part 3 - ECM-receptor communications](#case-study-part-3):** subset of communication pairs that represent experimentally validated ECM-receptor interactions, where 'ligands' are matrisome genes expressed by fibroblasts
-* **[Part 4 - Collagen VI-receptor communications](#case-study-part-4):** subset of communication pairs that consist of fibroblast-expressed collagen VI genes and their receptors
+* **[Part 0 - Build reference lists](#part-0---build-reference-lists)**: Process kidney scRNA-seq dataset with MatriCom and build metadata table, glossary of harmonized cell type labels, and lists of ECM-receptor gene pairs.
+* **[Part 1 - Full kidney communication network](#part-1---full-kidney-communication-network)**: Includes all communication pairs detected by default MatriCom analysis.
+* **[Part 2 - Fibroblast communications](#part-2---fibroblast-communications)**: Includes only the subset of communication pairs established by fibroblasts and their partners.
+* **[Part 3 - ECM-receptor communications](#part-3---ecm-receptor-communications)**: Includes only the subset of communication pairs that represent experimentally validated ECM-receptor interactions, where ligands are matrisome genes expressed by fibroblasts.
+* **[Part 4 - Collagen VI-receptor communications](#part-4---collagen-vi-receptor-communications)**: Includes only the subset of ECM-receptor communication pairs involving collagen VI ligand genes, expressed by fibroblasts, and their receptors.
 
 ![](f1.png)  
-*Figure 1. Kidney case study workflow.*
+**Figure 1. Overview of Kidney Case Study.**
 
 ### Required Libraries
 ```R
@@ -32,7 +32,7 @@ library("readxl")
 ```
 
 ### Set-up
-Set working directory (work dir) to desired file path, such as the current folder, for example. All files downloaded or created by the script will appear in one of the three folders specified after it. Checksums for downloaded files can be found in [md5sum.txt](./md5sum.txt).
+Set working directory (work dir) to desired file path, such as the current folder. All files downloaded or created by the script will appear in one of the three folders specified after it. Checksums for downloaded files can be found in [md5sum.txt](./md5sum.txt).
 ```R
 work.d <- setwd(".")
 dln.d <- paste0(work.d, "/", "downloaded")
@@ -44,9 +44,15 @@ Downloads time out. Because some of the downloads are quite large, we recommend 
 options(timeout=1800)
 ```
 
-### BUILD REFERENCE LISTS
-**Prepare Azimuth metadata for full kidney dataset:** To retrieve metadata for the original scRNA-seq dataset, download the *Human - Kidney* Seurat object from the Azimuth reference tissue library: [Demo Dataset(s): Stewart et al., Science 2019](https://azimuth.hubmapconsortium.org/references/#Human%20-%20Kidney).
-The full Azimuth metadata table can be extracted **automatically** as follows:
+### Part 0 - BUILD REFERENCE LISTS
+**Prepare metadata for kidney dataset from Azimuth** 
+
+The original kidney scRNA-seq dataset can be retrieved from teh Azimuth reference tissue library. 
+* URL: https://azimuth.hubmapconsortium.org
+* Go to *References* > *Human - Kidney* > *Demo Dataset(s)*
+* File: *Stewart et al., Science 2019 [Seurat object]*
+
+After downloading the dataset in `*.rds` format, the full Azimuth metadata table can be extracted programmatically, as follows:
 ```R
 # Download
 www <- "https://seurat.nygenome.org/azimuth/demo_datasets/kidney_demo_stewart.rds"
@@ -58,26 +64,43 @@ meta <- data.frame(meta@meta.data)
 # Save metadata in folder "reference-lists"
 write.csv(meta, paste0(ref.d, "/", "Azimuth kidney_demo_Seurat metadata.csv"))
 ```
-**Process kidney dataset with MatriCom and prepare glossary of cell type labels:** To count cells/expressions/communications per population, we must harmonize the format of population names across data sources (e.g. original annotations from MatriCom vs cell types from Azimuth metadata).
+**Process kidney dataset with MatriCom and prepare glossary of cell type labels** 
 
-First, go to MatriCom (https://matrinet.shinyapps.io/matricom/) to import the kidney dataset in one of two ways:
-* Use *Data Input* > *Option 1*
-  * Upload `downloads/kidney_demo_stewart.rds`.
+To count cells/expressions/communications per population, the format of population names must be harmonized across data sources (*e.g.*, original annotations from MatriCom vs cell type labels from Azimuth metadata).
+
+To process the kidney dataset, go to MatriCom (https://matrinet.shinyapps.io/matricom/) and import the data in one of two ways:
+* Use *Data Input* > *Option 1: Upload your own dataset*
+  * Using the *Browse* button, upload `downloaded/kidney_demo_stewart.rds`
   * Go to *Query Parameters* > *Select cell identity labels* > *celltype*  
-*OR*
-* Use *Data Input* > *Option 2*
+ *OR*
+* Use *Data Input* > *Option 2: Select a sample dataset*
   * Select *Collection* > *Other open access datasets*
-  * Select *Dataset* > *Kidney (Stewart et al., Science 2019)*  
+  * Select *Dataset* > *Kidney (Stewart et al., Science 2019)*
+  * Select *Sample annotation* > *Original*
 
-Save the file as `HKid_default_MatriCom network.XLSX` in same location as the `kidney.R` script (i.e. current work dir). **For user convenience, we provide the file.** 
-Import the kidney communication network from MatriCom and prepare glossary as follows:
+Run MatriCom analysis using all default query parameters, as follows:
+* Set minimum mean gene expression threshold = `1`
+* Set minimum % positive population threshold = `30%`
+* Filters
+  * Maximize model = `TRUE`
+  * Use exclusion list = `TRUE`
+  * Remove homomeric interactions = `TRUE`
+  * Filter by reliability score = `3`
+  * Filter by communication type = `Homocellular`, `Heterocellular`
+  * Filter by cellular compartment = `Matrisome`, `Surfaceome`, `Extracellular (Non-matrisome)`
+
+Save the file as `HKid_default_MatriCom network.XLSX` in same location as the `kidney.R` script (*i.e.*, current work dir). For user convenience, we provide the file [here](https://github.com/Matrisome/MatriCom-analyses/blob/main/CS/HKid_default_MatriCom%20network.XLSX). 
+
+Import the kidney communication network from MatriCom and prepare the glossary:
 
 ```R
 kidney <- as.data.frame(read_excel("HKid_default_MatriCom network.XLSX", sheet = "communication network"))
 gloss <- data.frame(kid = sort(unique(kidney$Population1)), meta = sort(unique(meta$celltype)))
 write.csv(gloss, paste0(ref.d, "/", "HuBMAP kidney_base lookup table.csv"))
 ```
-**Prepare gene pairs from KEGG ECM-receptor interaction pathway:** To identify ECM-receptor communication pairs in MatriCom output, import the *ECM-receptor interaction* pathway map ([hsa04512](https://www.kegg.jp/pathway/hsa04512)) from KEGG and extract gene pairs. Note that the directionality column in ECM-receptor reference list is used to designate the ligand or receptor gene and, likewise, the sender or receiver population within each pair returned by MatriCom.
+**Prepare gene pairs from KEGG ECM-receptor interaction pathway** 
+
+Import the *ECM-receptor interaction* pathway map (PATHWAY: [hsa04512](https://www.kegg.jp/pathway/hsa04512)) from [KEGG](https://www.kegg.jp) and extract gene pairs. Note that the directionality column, `dir`, in the ECM-receptor reference list is used to designate the ligand or receptor gene and, likewise, the sender or receiver population for each pair returned by MatriCom.
 ```R
 # Download
 download.kegg(pathway.id = "04512", species = "hsa", kegg.dir = dln.d, file.type = "xml")
@@ -109,7 +132,7 @@ dim(kg)
 write.csv(kg, paste0(ref.d, "/", "KEGG-hsa04512_LR-RL.csv"), row.names=F)
 ```
 
-Subset with only interactions involving non-integrin cell surface receptors:
+Retrieve the subset with only interactions involving non-integrin cell surface receptors:
 ```R
 # Cell surface interactions (non-integrin)
 kg_surf <- kg[grepl("ITG",kg$Gene1_Gene2)!=T,]
@@ -118,7 +141,7 @@ dim(kg_surf) #330 interactions
 # Save non-integrin interactions
 write.csv(kg_surf, paste0(ref.d, "/", "KEGG-hsa04512_surf.csv"), row.names=F)
 ```
-Subset with only interactions involving integrin receptors, represented as alpha-beta subunit gene pairs:
+Retrieve the subset with only interactions involving integrin receptors, represented as functional alpha-beta subunit gene pairs:
 ```R
 # Integrin interactions
 db <- subsetDB(CellChatDB=CellChatDB.human, search="ECM-Receptor", key="annotation")
@@ -136,15 +159,16 @@ write.csv(kg_itg, paste0(ref.d, "/", "KEGG-hsa04512_ITG.csv"), row.names=F)
 
 ---
 
-### CASE STUDY PART 1
-**Prepare matrisome gene list [0]:** To prepare the set of human and mouse matrisome gene symbols, also used to construct MatriComDB, annotated lists of human and mouse matrisome genes were downloaded from The Matrisome Project website: 
+### Part 1 - FULL KIDNEY COMMUNICATION NETWORK
+To prepare the set of human and mouse matrisome gene symbols, also used to construct MatriComDB, annotated lists of human and mouse matrisome genes were downloaded from The Matrisome Project website: 
 * Human
   * URL: https://sites.google.com/uic.edu/matrisome/matrisome-annotations/homo-sapiens
-  * Google sheet: *Download the complete Homo sapiens matrisome list (rev. 2014)* > save as an XLSX file
+  * Google sheet: *Download the complete Homo sapiens matrisome list (rev. 2014)* 
 * Mouse
   * URL: https://sites.google.com/uic.edu/matrisome/matrisome-annotations/mus-musculus
-  * Google sheet: *Download the complete Mus musculus matrisome list (rev. 2014)* > save as an XLSX file
-We combined the human and mouse lists and filtered for only unique entries, keeping matrisome division and category columns:
+  * Google sheet: *Download the complete Mus musculus matrisome list (rev. 2014)*
+
+We downloaded and combined the human and mouse lists, keeping matrisome division and category columns [0]:
 ```R
 # Obtain the sheets directly from upstream
 hs <- as.data.frame(gsheet2tbl("https://docs.google.com/spreadsheets/d/1GwwV3pFvsp7DKBbCgr8kLpf8Eh_xV8ks/edit?usp=sharing&ouid=102352631360008021621&rtpof=true&sd=true", sheetid = "Hs_Matrisome_Masterlist"))
@@ -159,7 +183,11 @@ colnames(m.list) <- c("Division", "Category", "Gene_Symbol")
 write.csv(m.list, paste0(out.d, "/", "MATRISOME_Hs-Mm_masterlist.csv"), quote = F, row.names = F)
 ```
 
-After importing the default MatriCom communication network table, we add columns for population and gene pair labels, including matrisome divisions and categories [1]. We identify individual kidney cell populations and find the contribution of expressions per population [2], relative to population size in the original sample scRNA-seq dataset from Azimuth. Here, we define *expressions* as the number of times a given population appears in any communication in the MatriCom output table.
+After importing the default MatriCom communication network table, we added columns for population and gene pair labels, including matrisome **_divisions_** and *categories* [1]: 
+* **_Core matrisome_**: *ECM glycoproteins*, *Collagens*, *Proteoglycans*
+* **_Matrisome-associated_**: *ECM regulators*, *ECM-affiliated proteins*, *Secreted factors*
+
+We identified individual kidney cell populations and found the contribution of expressions per population [2], relative to population size in the original scRNA-seq dataset from Azimuth. Here, we defined *expressions* as the number of times a given population appears in any communication in the MatriCom output table.
 ```R
 kidney$Population1 <- apply(kidney, 1, function(x){
   r <- match(x[1], gloss$kid)
@@ -200,15 +228,15 @@ pops$ctrb.Expr <- pops$freq.Expr / pops$freq.Pop
 
 write.csv(pops, paste0(out.d, "/", "HKid_default_Pop Contrib.csv"), row.names = F)
 ```
-This section will produce the following results in `results-output/`:
+This section produces the following results in `results-output/`:
 * [0] `MATRISOME_Hs-Mm_masterlist.csv`
 * [1] `HKid_default_Div-Cat.csv`
 * [2] `HKid_default_Pop Contrib.csv`
 
 ---
 
-### CASE STUDY PART 2
-Next, we take a subset of communications from the full network in which fibroblasts are one of the communicating populations [3] and find the frequency of each population pair. We then determine the contribution of communications per partner population to the full fibroblast network [4], the fibroblast Matrisome-Matrisome communication network [5], and the fibroblast Matrisome-Non.matrisome communication network [6], relative to the size of both populations in the original sample scRNA-seq dataset.
+### Part 2 - FIBROBLAST COMMUNICATIONS
+Next, we took a subset of communications from the full network in which fibroblasts are one of the communicating populations [3] and found the frequency of each population pair. We then determined the contribution of communications per partner population to the entire fibroblast network [4], the fibroblast Matrisome-Matrisome communication network [5], and the fibroblast Matrisome-Non.matrisome communication network [6], relative to the size of both populations in the original  scRNA-seq dataset.
 
 ```R
 # Fibroblast Partner Contribution
@@ -309,7 +337,7 @@ nmx$ctrb_pp.AN <- nmx$pp.AN * nmx$ctrb.NMX
 
 write.csv(nmx, paste0(out.d, "/", "HKid_default_Fib Pair Contrib_NMX.csv"), row.names=F)
 ```
-This section will produce the following results in `results-output/`:
+This section produces the following results in `results-output/`:
 * [3] `HKid_default_Div-Cat_Fib.csv`
 * [4] `HKid_default_Fib Pair Contrib.csv`
 * [5] `HKid_default_Fib Pair Contrib_MXMX.csv`
@@ -317,8 +345,8 @@ This section will produce the following results in `results-output/`:
 
 ---
 
-### CASE STUDY PART 3
-Next, we take a subset of communications which represent an ECM-receptor gene pair where fibroblasts are the sender population [7]. We identify unique ligand and receptor genes [8,9] and find the contribution of communications per receiver population to the fibroblast ECM-receptor network [10], relative to the size of both populations in the original sample scRNA-seq dataset.
+### Part 3 - ECM-RECEPTOR COMMUNICATIONS
+Next, we took a subset of communications which represent an ECM-receptor gene pairs where fibroblasts are the *sender* population [7]. We identified unique ligand and receptor genes [8,9] and found the contribution of communications per receiver population to the fibroblast ECM-receptor network [10], relative to the size of both populations in the original scRNA-seq dataset.
 ```R
 # Fibroblast ECM-Receptors
 
@@ -441,7 +469,7 @@ recv$ctrb_p.Col_Non <- recv$ctrb.Comm * recv$p.Col_Non
 
 write.csv(recv, paste0(out.d, "/", "HKid_default_Fib Receiver Contrib.csv"), row.names = F)
 ```
-This section will produce the following results in `results-output/`:
+This section produces the following results in `results-output/`:
 * [7] `HKid_default_Div-Cat_Fib ECM-R.csv`
 * [8] `HKid_default_Fib Ligands.csv`
 * [9] `HKid_default_Fib Receptors.csv`
@@ -449,8 +477,8 @@ This section will produce the following results in `results-output/`:
 
 ---
 
-### CASE STUDY PART 4
-Finally, we evaluate the degree to which known collagen VI-receptor interactions (from KEGG) are recapitulated by communications returned from transcriptomic-level MatriCom analysis. Taking a subset of communications in which fibroblasts express one of the three genes - *COL6A1*, *COL6A2*, and *COL6A3* - which encode the [a1(VI)a2(VI)a3(VI)] trimer [11], we identify receiver populations and extrapolated distinct collagen VI-cell surface receptor interactions [12]. Next, we identify receiver populations that express pairs of *ITGA* and *ITGB* genes which are known to form integrin heterodimers and extrapolated distinct collagen VI-integrin receptor complexes. [13,14]. 
+### Part 4 - COLLAGEN VI-RECEPTOR COMMUNICATIONS
+Finally, we evaluated the degree to which known collagen VI-receptor interactions are recapitulated by communications returned from transcriptomic-level MatriCom analysis. Taking a subset of communications in which fibroblasts express one of the three genes - *COL6A1*, *COL6A2*, and *COL6A3* - encoding the [a1(VI)a2(VI)a3(VI)] trimer [11], we identified receiver populations and extrapolated distinct collagen VI-cell surface receptor interactions [12,13]. Next, we identified receiver populations that express pairs of *ITGA* and *ITGB* genes which are known to form integrin heterodimers and extrapolated distinct collagen VI-integrin receptor complexes. [14,15]. 
 
 ```R
 # Fibroblast Collagen Type VI
@@ -538,8 +566,9 @@ dim(zi.Y1) #134
 
 write.csv(zi.Y1, paste0(out.d, "/", "HKid_default_Fib COL6-ITG_interactions.csv"), row.names=F)
 ```
-This section will produce the following results in `results-output/`:
+This section produces the following results in `results-output/`:
 * [11] `HKid_default_Div-Cat_Fib ECM-R_COL6.csv`
-* [12] `HKid_default_Fib COL6-Surf_interactions.csv`
-* [13] `HKid_default_Fib COL6-ITG_communications.csv`
-* [14] `HKid_default_Fib COL6-ITG_interactions.csv`
+* [12] `HKid_default_Fib COL6-Surf_communications.csv`
+* [13] `HKid_default_Fib COL6-Surf_interactions.csv`
+* [14] `HKid_default_Fib COL6-ITG_communications.csv`
+* [15] `HKid_default_Fib COL6-ITG_interactions.csv`
