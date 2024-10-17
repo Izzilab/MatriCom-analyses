@@ -509,11 +509,11 @@ for(i in 1:nrow(p)){
 }
 ```
 
-Obtain the TF-target table annotated from TTRUST:
+Obtain the TF-target table annotated from TFTG:
 * url: http://tf.liclab.net/TFTG/ 
 * File: `Curate.txt`. Upstream link seems to be unavailable at the moment, so we provide it as a zipped file.
 
-We will also counter-check against the TF-target table annotated from TTRUST:
+We will also counter-check against the TF-target table annotated from TFTG:
 ```R
 unzip("Curate.txt.zip")
 
