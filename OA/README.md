@@ -704,6 +704,20 @@ ph <- pheatmap(cor(mat))
 ph <- ph$tree_row$labels[ph$tree_row$order]
 mat2 <- mat2[match(ph,rownames(mat2)),]
 pheatmap(mat2,cellwidth=4,cellheight=4,fontsize=4,cluster_rows = F, cluster_cols = F, rocket(10))
+
+# Exemplary clusters (confront the above heatmap with modularity optimization in igraph)
+mm <- cor(mat)
+mm[mm<0.7] <- 0
+mm <- reshape2::melt(mm)
+g <- graph_from_data_frame(mm,directed=F)
+E(g)$weight <- mm$value
+zero_weight_edges <- E(g)[weight == 0]
+g2 <- delete_edges(g, zero_weight_edges)
+g2 <- delete_edges(g, zero_weight_edges)
+g2 <- simplify(g2)
+community <- cluster_fast_greedy(g2)
+plot(community, g2, vertex.label.cex=0.3)
+community
 ```
 
 |mat|ph|mat2|
@@ -802,6 +816,21 @@ rownames(enlist) <- unique(res$term_name)
 enlist <- cor(enlist)
 enlist[is.na(enlist)] <- 0
 pheatmap(enlist,fontsize = 5,color=colorRampPalette(c("white", "red"))(50))
+
+# Exemplary clusters (confront the above heatmap with modularity optimization in igraph)
+mm <- cor(mt)
+mm[mm<0.7] <- 0
+mm <- reshape2::melt(mm)
+g <- graph_from_data_frame(mm,directed=F)
+E(g)$weight <- mm$value
+zero_weight_edges <- E(g)[weight == 0]
+g2 <- delete_edges(g, zero_weight_edges)
+g2 <- delete_edges(g, zero_weight_edges)
+g2 <- simplify(g2)
+community <- cluster_fast_greedy(g2)
+plot(community, g2, vertex.label.cex=0.3)
+community
+
 ```
 
 |fin.tab|gf|hmmt|
