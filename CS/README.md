@@ -5,10 +5,10 @@ To demonstrate how MatriCom can be used to interrogate biological systems, we pe
 
 The workflow is divided into a preparation step, followed by a four-part case study (Figure 1):
 * **[Part 0 - Build reference lists](#part-0---build-reference-lists)**: Process kidney scRNA-seq dataset with MatriCom and build metadata table, glossary of harmonized cell type labels, and lists of ECM-receptor gene pairs.
-* **[Part 1 - Full kidney communication network](#part-1---full-kidney-communication-network)**: Includes all communication pairs detected by default MatriCom analysis.
-* **[Part 2 - Fibroblast communications](#part-2---fibroblast-communications)**: Includes only the subset of communication pairs established by fibroblasts and their partners.
-* **[Part 3 - ECM-receptor communications](#part-3---ecm-receptor-communications)**: Includes only the subset of communication pairs that represent experimentally validated ECM-receptor interactions, where ligands are matrisome genes expressed by fibroblasts.
-* **[Part 4 - Collagen VI-receptor communications](#part-4---collagen-vi-receptor-communications)**: Includes only the subset of ECM-receptor communication pairs involving collagen VI ligand genes, expressed by fibroblasts, and their receptors.
+* **[Part 1 - Full kidney communication network](#part-1---full-kidney-communication-network)**: Includes all communication pairs detected after running MatriCom.
+* **[Part 2 - Fibroblast communications](#part-2---fibroblast-communications)**: Includes the subset of communication pairs established by fibroblasts and their partners.
+* **[Part 3 - ECM-receptor communications](#part-3---ecm-receptor-communications)**: Includes the subset of communication pairs that represent experimentally-validated ECM-receptor interactions, where ligands are matrisome genes expressed by fibroblasts.
+* **[Part 4 - Collagen VI-receptor communications](#part-4---collagen-vi-receptor-communications)**: Includes the subset of ECM-receptor communication pairs involving collagen VI ligand genes expressed by fibroblasts, and their receptors.
 
 ![](f1.png)  
 **Figure 1. Overview of Kidney Case Study.**
@@ -47,7 +47,7 @@ options(timeout=1800)
 ### Part 0 - BUILD REFERENCE LISTS
 **Prepare metadata for kidney dataset from Azimuth** 
 
-The original kidney scRNA-seq dataset can be retrieved from teh Azimuth reference tissue library. 
+The original kidney scRNA-seq dataset can be retrieved from the Azimuth reference tissue library. 
 * URL: https://azimuth.hubmapconsortium.org
 * Go to *References* > *Human - Kidney* > *Demo Dataset(s)*
 * File: *Stewart et al., Science 2019 [Seurat object]*
@@ -236,7 +236,7 @@ This section produces the following results in `results-output/`:
 ---
 
 ### Part 2 - FIBROBLAST COMMUNICATIONS
-Next, we took a subset of communications from the full network in which fibroblasts are one of the communicating populations [3] and found the frequency of each population pair. We then determined the contribution of communications per partner population to the entire fibroblast network [4], the fibroblast Matrisome-Matrisome communication network [5], and the fibroblast Matrisome-Non.matrisome communication network [6], relative to the size of both populations in the original  scRNA-seq dataset.
+Next, we took the subset of communication pairs from the full network in which fibroblasts are one of the communicating populations [3] and found the frequency of each population pair. We then determined the contribution of communications per partner population to the entire fibroblast network [4], the fibroblast Matrisome-Matrisome communication network [5], and the fibroblast Matrisome-Non.matrisome communication network [6], relative to the size of both populations in the original scRNA-seq dataset.
 
 ```R
 # Fibroblast Partner Contribution
@@ -346,7 +346,7 @@ This section produces the following results in `results-output/`:
 ---
 
 ### Part 3 - ECM-RECEPTOR COMMUNICATIONS
-Next, we took a subset of communications which represent an ECM-receptor gene pairs where fibroblasts are the *sender* population [7]. We identified unique ligand and receptor genes [8,9] and found the contribution of communications per receiver population to the fibroblast ECM-receptor network [10], relative to the size of both populations in the original scRNA-seq dataset.
+Next, we took the subset of communication pairs which represent an ECM-ECM receptor gene pairs where fibroblasts are the *sender* population [7]. We identified unique ligand and receptor genes [8,9] and found the contribution of communications per receiver population to the fibroblast ECM-receptor network [10], relative to the size of both populations in the original scRNA-seq dataset.
 ```R
 # Fibroblast ECM-Receptors
 
@@ -478,7 +478,7 @@ This section produces the following results in `results-output/`:
 ---
 
 ### Part 4 - COLLAGEN VI-RECEPTOR COMMUNICATIONS
-Finally, we evaluated the degree to which known collagen VI-receptor interactions are recapitulated by communications returned from transcriptomic-level MatriCom analysis. Taking a subset of communications in which fibroblasts express one of the three genes - *COL6A1*, *COL6A2*, and *COL6A3* - encoding the [a1(VI)a2(VI)a3(VI)] trimer [11], we identified receiver populations and extrapolated distinct collagen VI-cell surface receptor interactions [12,13]. Next, we identified receiver populations that express pairs of *ITGA* and *ITGB* genes which are known to form integrin heterodimers and extrapolated distinct collagen VI-integrin receptor complexes. [14,15]. 
+Finally, we evaluated the degree to which known collagen VI-receptor interactions are recapitulated by communications returned from transcript-level MatriCom analysis. Taking a subset of communications in which fibroblasts express one of the three genes - *COL6A1*, *COL6A2*, and *COL6A3* - encoding the [a1(VI)a2(VI)a3(VI)] trimer [11], we identified receiver populations and extrapolated distinct collagen VI-cell surface receptor interactions [12,13]. Next, we identified receiver populations that express pairs of *ITGA* and *ITGB* genes which are known to form functional integrin heterodimers and extrapolated distinct collagen VI-integrin receptor complexes [14,15]. 
 
 ```R
 # Fibroblast Collagen Type VI
