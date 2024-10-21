@@ -4,7 +4,7 @@ All steps discussed below are included in a **single script**: [patterns_matrico
 The workflow is divided into three sections:  
 * [Section 0 - Gene expression analysis](#section-0---gene-expression-analysis): Compares expression profiles for matrisome and non-matrisome gene across organs from Tabula Sapiens data.
 * [Section 1 - Analyses of MatriCom patterns](#section-1---analyses-of-matricom-patterns): Processes open-access data from Tabula Sapiens and The Human Protein Atlas with MatriCom to identify patterns (*e.g.*, *GENE1-GENE2* pairs or vice versa) that are expressed across multiple tissues and organs. 
-* [Section 2 - Data visualization](#section-2---data-visualization): Plots various aspects of results, such as network analysis output, cross-compartment communications, and tissue/organ pattern correlations.
+* [Section 2 - Data visualization](#section-2---data-visualization): Plots various aspects of the results, such as network analysis output, cross-compartment communications, and tissue/organ pattern correlations.
 
 Several files must downloaded for this workflow, and their checksums are provided in [md5sum.txt](./md5sum.txt).
 
@@ -43,7 +43,7 @@ options(timeout=1800)
 ---
 
 ### Section 0 - GENE EXPRESSION ANALYSIS
-**Analysis of matrisome vs non-matrisome gene expression across multiple organs from Tabula Sapiens data**
+**Analysis of matrisome vs non-matrisome gene expression levels across multiple organs from Tabula Sapiens data**
 
 Tabula Sapiens data can be retrieved from the CZ CELLxGENE dataset portal:
 * URL: https://cellxgene.cziscience.com/datasets
@@ -436,7 +436,7 @@ z <- simplify(graph_from_data_frame(s1[,c(18,19)],directed = F),remove.loops = F
 m4 <- as.data.frame(as.matrix(as_adj(z)))
 ```
 
-#### Analysis of conserved pattern-associated transcription factors
+#### Identification of conserved pattern-associated transcription factors (TFs)
 The complete TF2DNA database can be retrieved from here:
 * URL: https://www.fiserlab.org/tf2dna_db/downloads.html
 * File: `TF target files [1.9G]`    
@@ -451,7 +451,7 @@ untar("pscan_files.tar.gz", files="pscan_files/Homo-sapiens_theoretical_TF2DNA")
 pscan <- paste0(work.d, "/pscan_files/Homo-sapiens_theoretical_TF2DNA")
 ```
 
-To identify TFs that potentially regulate conserved patterns, we identified sets of common TFs found to target communicating partners:
+To identify TFs that potentially regulate conserved matrisoem communication patterns, we identified sets of TFs found to target communicating partners:
 ```R
 setwd(pscan)
 
@@ -575,7 +575,7 @@ Load the `matrisome_patterns.RDS` files generated in Section 1 or, if you jumped
 # Your own, generated from the previous step
 matricom_patterns <- readRDS("matricom_patterns.RDS")
 
-# The one from us
+# Ours
 matricom_patterns <- readRDS("matricom_patterns/matricom_patterns.RDS")
 ```
 
@@ -603,7 +603,7 @@ plot(n,
      vertex.color=cols)
 ```
 
-#### Plot of the matrisome categories
+#### Plot of matrisome categories
 ```R
 m <- matricom_patterns$matrisome.categories
 m$V1 <- gsub("_.*","",m$Group.1)
