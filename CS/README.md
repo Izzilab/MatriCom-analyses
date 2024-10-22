@@ -27,7 +27,6 @@ library("org.Hs.eg.db")
 library("CellChat")
 library("data.table")
 library("gsheet")
-library("pathview")
 library("readxl")
 ```
 
@@ -101,11 +100,11 @@ write.csv(gloss, paste0(ref.d, "/", "HuBMAP kidney_base lookup table.csv"))
 **Prepare gene pairs from KEGG ECM-receptor interaction pathway** 
 
 Import the *ECM-receptor interaction* pathway map (PATHWAY: [hsa04512](https://www.kegg.jp/pathway/hsa04512)) from [KEGG](https://www.kegg.jp) and extract gene pairs. Note that the directionality column, `dir`, in the ECM-receptor reference list is used to designate the ligand or receptor gene and, likewise, the sender or receiver population for each pair returned by MatriCom.
+
 ```R
 # Download
-download.kegg(pathway.id = "04512", species = "hsa", kegg.dir = dln.d, file.type = "xml")
+kg <- parseKGML2DataFrame("hsa04512.xml")
 
-kg <- parseKGML2DataFrame(paste0(dln.d, "/", "hsa04512.xml"))
 kg$from <- gsub("hsa:","",kg$from)
 kg$to <- gsub("hsa:","",kg$to)
 kg$order <- c(1:nrow(kg))
@@ -180,6 +179,10 @@ mm[, 3] <- toupper(mm[, 3])
 m.list <- rbind(hs, mm)
 m.list <- unique(m.list)
 colnames(m.list) <- c("Division", "Category", "Gene_Symbol")
+
+sort(unique(m.list$Category))
+sort(unique(kidney$Matrisome.Category.Gene1))
+
 write.csv(m.list, paste0(out.d, "/", "MATRISOME_Hs-Mm_masterlist.csv"), quote = F, row.names = F)
 ```
 
