@@ -1,6 +1,6 @@
-# MatriCom analyses
+# MatriCom Analyses
 
-This includes two types of example analyses involving, [MatriCom](https://github.com/Izzilab/MatriCom). One uses open access data of many tissues/cell types, publicly available online, the other is a case study of kidney by Naba lab (https://naba.lab.uic.edu/).
+Here, we present two analyses using [MatriCom](https://github.com/Izzilab/MatriCom). The first analysis uses publicly available open-access datasets from a large panel of tissues and cell types. The second case study demonstrates the usability of MatriCom to infer communication networks in the kidney matrisome performed by the Naba Lab (https://naba.lab.uic.edu/).
 
-## [Open access](./OA)
-## [Case study](./CS)
+## [Open-access](./OA)
+## [Case Study](./CS)

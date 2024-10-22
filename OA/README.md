@@ -1,14 +1,14 @@
-## Matricom Patterns in open access (OA) data
-All steps discussed below are included in a **single script**, called [patterns_matricom.R](patterns_matricom.R).
+## MatriCom patterns in open-access data
+All steps discussed below are included in a **single script**: [patterns_matricom.R](patterns_matricom.R).
 
-The workflow is divided into three sections.  
-* [Section 0: Comparative data analysis](#section-0-comparative-data-analysis). Comparative expression between matrisome and non-matrisome genes from Tabula Sapiens data.  
-* [Section 1: Data analyses](#section-1-data-analysis). Process the open access data from Tabula Sapiens and The Human Protein Atlas by MatriCom, then look for "patterns" pairs (gene1-gene2 or vice versa) that are expressed across multiple organs.  
-* [Section 2: Plotting](#section-2-plotting): Visualize various aspects of the results, such as network, interactions between compartments, tissue/organ patterns correlation and more.  
+The workflow is divided into three sections:  
+* [Section 0 - Gene expression analysis](#section-0---gene-expression-analysis): Compares expression profiles for matrisome and non-matrisome gene across organs from Tabula Sapiens data.
+* [Section 1 - Analyses of MatriCom patterns](#section-1---analyses-of-matricom-patterns): Processes open-access data from Tabula Sapiens and The Human Protein Atlas with MatriCom to identify patterns (*e.g.*, *GENE1-GENE2* pairs or vice versa) that are expressed across multiple tissues and organs. 
+* [Section 2 - Data visualization](#section-2---data-visualization): Plots various aspects of the results, such as network analysis output, cross-compartment communications, and tissue/organ pattern correlations.
 
-Several files should be downloaded, and their checksums can be found in [md5sum.txt](./md5sum.txt).
+Several files must downloaded for this workflow, and their checksums are provided in [md5sum.txt](./md5sum.txt).
 
-### Libraries needed
+### Required Libraries
 ```R
 library("dplyr")
 library("data.table")
@@ -30,41 +30,38 @@ library("viridis")
 library("gprofiler2")
 ```
 
-### Set up
-Work dir, for example the current folder, but set up to your liking. All subsequent subfolders will be created here.
+### Set-up
+Set working directory (work dir) to desired file path, such as the current folder. All subsequent subfolders are created here.
 ```R
 work.d <- setwd(".")
 ```
-Downloads time out. Some downloads are quite large, so setting specifying a longer timeout may be needed. This will increase it to 30 min:
+Downloads time out. Because some of the downloads are quite large, we recommend specifying a longer timeout. This will increase it to 30 min:
 ```R
 options(timeout=1800)
 ```
 
-### SECTION 0: COMPARATIVE DATA ANALYSIS
-**Matrisome gene expression in Tabula Sapiens - how do matrisome counts compare
-to non-matrisome ones?** 
+---
 
-Data is from https://cellxgene.cziscience.com/datasets
-* Filters > Publication > The Tabula Sapiens Consortium et al. (2022) Science
+### Section 0 - GENE EXPRESSION ANALYSIS
+**Analysis of matrisome vs non-matrisome gene expression levels across multiple organs from Tabula Sapiens data**
 
-In our scheme, we download the data for all cells in RDS format. This will do it
-**automatically** (file size is 10.4 GiB, therefore the timeout option from above may be useful):
+Tabula Sapiens data can be retrieved from the CZ CELLxGENE dataset portal:
+* URL: https://cellxgene.cziscience.com/datasets
+* Go to _Filters > Publication > The Tabula Sapiens Consortium* et al. (2022) Science_
+* Dataset: _Tabula Sapiens - All Cells_
+
+Download the file in `*.rds` format and import the full Tabula Sapiens dataset. Note that the file size is 10.4 GiB, so the download timeout option (see above) may be useful. You will need approximately 64 GiB of RAM for this file to load. The following will retrieve the data programmatically: 
 ```R
 www <- "https://datasets.cellxgene.cziscience.com/981bcf57-30cb-4a85-b905-e04373432fef.rds"
 download.file(www, "all_cells.rds")
 tabsap <- readRDS("all_cells.rds")
 ```
-  
-**NOTE!** You will need about 64GiB of RAM for this file to load.
 
-This file from the MatriCom app, contains cell compartment information for genes and should be loaded as follows :
+Load the file containing cellular compartment information for genes. For user convenience, we provide the file [here](./CCgenes2.RDS).
 ```R
 cc <- readRDS("CCgenes2.RDS")
 ```
-Note that we will need to operate conversions from EnsemblId to gene symbol
-for the count tables. Also, we won't provide these data publicly as they are
-just an analysis of open access (OA) data, so plots will follow results in
-this section.
+We assigned genes to cellular compartments and determined mean expression per compartment across all organs included in Tabula Sapiens. Ensembl IDs were converted to gene symbols to build count tables. Note that because this is an analysis of open-access data, we are not providing output data here. Plots of analysis results are provided in Figure 1. 
 ```R
 cc$label <- ifelse(cc$label%in%"cell membrane","intracellular",
                    ifelse(cc$label %in% c("extracellular","surfaceome"),"surface or extracellular non-matrisome","matrisome"))
@@ -100,50 +97,40 @@ obj <- l %>% group_by(organ) %>% do(model = aov(v~compartment, data = .))
 lapply(obj$model, summary)
 ```
 ![Fig1](./figs/fig1.png)
-*Figure 1. Comparative data analysis.* Preview of ggplot's output.
+**Figure 1. Gene expression analysis of Tabula Sapiens data.** Mean scaled expression of genes encoding surfaceome or extracellular (yellow), intracellular (blue), and matrisome (green) components across 24 organs from Tabula Sapiens. Plot generated with ggplot2. 
 
 ---
 
-### SECTION 1: DATA ANALYSIS
-If you are only interested in the final results and plotting, skip to [Section 2](#section-2-plotting).
+### Section 1 - ANALYSES OF MATRICOM PATTERNS
+If you are only interested in the final results and data visualization, jump to [Section 2](#section-2---data-visualization).
 
-Get [MatriCom](https://matrinet.shinyapps.io/matricom/) data (open access).
-Use "Option 2: Select a sample dataset". From 
-the Tabula Sapiens (TS) collection, process all 24 tissue datasets. From the
-Human Protein Atlas (THPA) collection, process the 22 tissue datasets that can
-be reannotated with Census. 
+#### Process open-access datasets with MatriCom  
+Using the online [MatriCom](https://matrinet.shinyapps.io/matricom/) interface, import open-access data using *Data Input - Option 2: Select a sample dataset*. Process all 24 Tabula Sapiens (TS) datasets and all 22 datasets from The Human Protein Atlas (THPA) collection for which [Census](https://github.com/sjdlabgroup/Census) annotations are available.
 
-Use default MatriCom settings for both:
-* Set minimum mean gene expression threshold = 1
-* Set minimum % positive population threshold = 30%
+For all datasets, run MatriCom using all default query parameters, as follows:
+* Set minimum mean gene expression threshold = `1`
+* Set minimum % positive population threshold = `30%`
 * Filters: 
-  * Maximize model 
-  * Use exclusion list
-  * Remove homomeric interactions
-* Filter by reliability score: 3
-* Filter by communication type: 
-  * Homocellular
-  * Heterovellular
-* Filter by cellular compartment:
-  * Matrisome
-  * Surfaceome
-  * Extracellular (Non-matrisome)
+  * Maximize model = `TRUE`
+  * Use exclusion list = `TRUE`
+  * Remove homomeric interactions = `TRUE`
+  * Filter by reliability score = `3`
+  * Filter by communication type = `Homocellular`, `Heterocellular` 
+  * Filter by cellular compartment = `Matrisome`, `Surfacome`, `Extracellular (Non-matrisome)`
 
-Save results in `XLSX` format, naming the files after the respective dataset, in
-folders named [TS-1.30](./TS-1.30/) and [THPA-Census-1.30](./THPA-Census-1.30/).
-In addition, for THPA results, rename the following, to be consistent with TS:
+For each dataset, export MatriCom output as an XLSX file and save results for TS and THPA data into the folders named [TS-1.30](./TS-1.30/) and [THPA-Census-1.30](./THPA-Census-1.30/), respectively. Name each file for its respective dataset and, finally, rename the following THPA files for consistency with TS nomenclature:
 
-*  Pbmc.XLSX -> Blood.XLSX
-*  Adipose_tissue.XLSX -> Fat.XLSX
-*  Heart_muscle.XLSX -> Heart.XLSX
-*  Colon.XLSX -> Large intestine.XLSX
-*  Skeletal_muscle.XLSX -> Muscle.XLSX
-*  Breast.XLSX -> Mammary.XLSX
+*  `Pbmc.XLSX`  >  `Blood.XLSX`
+*  `Adipose_tissue.XLSX`  >  `Fat.XLSX`
+*  `Heart_muscle.XLSX`  >  `Heart.XLSX`
+*  `Colon.XLSX`  >  `Large intestine.XLSX`
+*  `Skeletal_muscle.XLSX`  >  `Muscle.XLSX`
+*  `Breast.XLSX`  >  `Mammary.XLSX`
 
-For users' convenience, these have been processed and downloaded by us and are available in their
-respective folders. The sheet that will be processed is called "communication network".
+For user convenience, we previously processed all TS and THPA datasets with MatriCom and provide the output files in their respective folders. Note that only the *communication network* sheet of the XLSX file is used in the following analyses. 
 
-Process Tabula Sapiens data from its folder
+#### Identification of MatriCom patterns in open-access data
+We first imported processed data from the Tabula Sapiens folder:
 ```R
 tabsap.d <- paste0(work.d, "/TS-1.30")
 setwd(tabsap.d)
@@ -156,14 +143,7 @@ for(i in l){
   imp[[i]] <- df
 }
 ```
-
-We will look for "patterns" as gene1-gene2 (or vice versa) pairs that are
-expressed across multiple organs. Here, we face the possible problem of having
-"logical duplicates" (inverted pairs, such as A-B and B-A) across different
-cells in different organs. To avoid it, we decide to turn each tissue/organ
-into its own simplified network, not considering what cells participate to
-what pairs and eventual directionalities. While this could be "brutal" to the
-biology beneath, it is guaranteed to give consistent analytical results.
+Next, we looked for conserved patterns, defined as _GENE1-GENE2_ pairs (or vice versa), that are expressed across multiple organs. Here, we faced the problem of having "reciprocal duplicates" (*i.e.*, inverted pairs, such as _GENE1-GENE2_ and _GENE2-GENE1_) established by different cells across different organs. To avoid it, we treated each tissue/organ as its own simplified network and considered only the identities of the communicating genes without considering which populations establish which pairs. While this does not reflect the biology beneath, it is guaranteed to give consistent analytical results.
 ```R
 d_imp <- bind_rows(imp)
 d_imp <- unique(c(d_imp$Gene1,d_imp$Gene2))
@@ -196,8 +176,7 @@ nrow(ns[ns$value>=12,]) # 1200 pairs are expressed in at least 12 (50%) of tissu
 ns <- ns[ns$value>=12,]
 ```
 
-Finally, we will cross-check into The Human Protein Atlas collections for the presence of these
-same pairs.
+Next, we cross-checked The Human Protein Atlas data for the presence of the same pairs detected in Tabula Sapiens:
 ```R
 census <- paste0(work.d, "/THPA-Census-1.30")
 setwd(census)
@@ -218,10 +197,11 @@ pats <- ns_t %s% ns_tp
 ecount(pats)
 ```
 
-Here, we will analyze the matrisome features of the common patterns. The
-Matrisome "masterlist" should be downloaded from:
-* url: https://sites.google.com/uic.edu/matrisome/matrisome-annotations/homo-sapiens
-* file: "Download the complete Homo sapiens matrisome list (rev. 2014)", save it as `Hs_Matrisome_Masterlist_Naba et al_2012.xlsx`
+We then analyzed the matrisome features of common patterns, including matrisome division and category of partners. The matrisome "master list" can be retrieved from The Matrisome Project:
+* URL: https://sites.google.com/uic.edu/matrisome/matrisome-annotations/homo-sapiens
+* Google sheet: "Download the complete Homo sapiens matrisome list (rev. 2014)"  
+
+Save the spreadsheet  as `Hs_Matrisome_Masterlist_Naba et al_2012.xlsx` and import:
 ```R
 pats <- as.data.frame(as_edgelist(pats))
 names(pats) <- c("Gene1","Gene2")
@@ -248,7 +228,7 @@ v2$v[18] <- "ECM Glycoproteins_Non-matrisome"
 v2 <- aggregate(v2$Freq,list(v2$v),sum)
 ```
 
-Lastly, we put the patterns back into the data to find out what cells produce them
+Finally, we put the patterns back into the data to find out what cells produce them:
 ```R
 setwd(tabsap.d)
 ps <- paste0(pats$Gene1,pats$Gene2)
@@ -292,27 +272,21 @@ for(i in l){
 }
 tab2 <- bind_rows(imp) #20 tissues (91%) mark positive for at least one pattern in THPA
 ```
+#### Cross-compartment analysis of conserved patterns
+We next sought to identify which cell populations contribute to the patterns identified as highly-conserved across tissues/organs. Though we harmonized cell type labels across the two open-access data collections by using Census annotations for THPA data, the granularity of results posed a challenge to high-level summarization. To overcome this, we made use of the _compartment_ annotation used by Tabula Sapiens. 
 
-Tabula sapiens metadata can be obtained from here:
-* url: https://figshare.com/articles/dataset/Tabula_Sapiens_release_1_0/14267219.
-* File: `Tabula_Sapiens_metadata.csv`
+Tabula Sapiens metadata is available here:
+* URL: https://figshare.com/articles/dataset/Tabula_Sapiens_release_1_0/14267219.
+* File: `Tabula_Sapiens_metadata.csv`  
 
-These lines below will do it automatically for you:
+The following will retrieve the file automatically: 
 ```R
 setwd(work.d)
 www <- "https://figshare.com/ndownloader/files/40066912"
 download.file(www, "Tabula_Sapiens_metadata.csv")
 ```
 
-To understand these cross-tissue, highly-conserved patterns, we would need to
-understand what cells produce them. However, though we have used the Census-
-converted data for THPA, the granularity of the results poses a challenge to
-high-level summarization to overcome it, we will make use of the "compartment"
-annotation used by tabula sapiens, as all cells in that collection (and thus,
-in census-THPA) belong to 5 compartments only note that not all the annotations
-match, so we have to fix the mismatches manually. Aalso, here we will simplify
-logical duplicates (inverted entries, so A-B and B-A will be summed together
-and only presented as A-B)
+We assigned all cells in the TS and THPA datasets oto one of five compartments: _immune, endothelial, stromal, epithelial_ or _germ line_. However, because not all annotation matched identically, we resolved mismatches manually and introduced a _stem cell_ compartment label. We also simplified "reciprocal duplicates", such that _GENE1-GENE2_ and _GENE2-GENE1_ pairs were summed and only presented as _GENE1-GENE2_.
 ```R
 meta <- as.data.frame(fread("Tabula_Sapiens_metadata.csv"))
 meta <- meta[,c(8,11)]
@@ -462,11 +436,13 @@ z <- simplify(graph_from_data_frame(s1[,c(18,19)],directed = F),remove.loops = F
 m4 <- as.data.frame(as.matrix(as_adj(z)))
 ```
 
-TF2DNA Database can be obtained from here:
-* url: https://www.fiserlab.org/tf2dna_db/downloads.html
-* File: `TF target files`. Note that this is 1.9 GiB! Download, untar, then only keep the folder `/pscan_files/Homo-sapiens_theoretical_TF2DNA`.
+#### Identification of conserved pattern-associated transcription factors (TFs)
+The complete TF2DNA database can be retrieved from here:
+* URL: https://www.fiserlab.org/tf2dna_db/downloads.html
+* File: `TF target files [1.9G]`    
 
-These lines below will do this automatically for you:
+Once downloaded and unzipped, only the `/pscan_files/Homo-sapiens_theoretical_TF2DNA` folder is needed.
+The following will retrieve the folder automatically: 
 ```R
 setwd(work.d)
 www <- "http://fiserlab.org/pscan_files.tar.gz"
@@ -475,7 +451,7 @@ untar("pscan_files.tar.gz", files="pscan_files/Homo-sapiens_theoretical_TF2DNA")
 pscan <- paste0(work.d, "/pscan_files/Homo-sapiens_theoretical_TF2DNA")
 ```
 
-Transcription factors potentially regulating the patterns:
+To identify TFs that potentially regulate conserved matrisoem communication patterns, we identified sets of TFs found to target communicating partners:
 ```R
 setwd(pscan)
 
@@ -509,11 +485,12 @@ for(i in 1:nrow(p)){
 }
 ```
 
-Obtain the TF-target table annotated from TFTG:
-* url: http://tf.liclab.net/TFTG/ 
-* File: `Curate.txt`. Upstream link seems to be unavailable at the moment, so we provide it as a zipped file.
+We further checked for common TFs of conserved patterns. The annotated TF-target table cen be retrieved from TTRUST:
+* URL: http://tf.liclab.net/TFTG/ 
+* File: `Curate.txt`
 
-We will also counter-check against the TF-target table annotated from TFTG:
+Note that the upstream link is seemingly unavailable at the moment, so we provide it as a zipped file [here](./Curate.txt).
+
 ```R
 unzip("Curate.txt.zip")
 
@@ -550,11 +527,14 @@ for(i in unique(lst2$pattern)){
 fin <- bind_rows(fin) #all pairs found common matching TFs (length(unique(fin$pattern)))
 ```
 
-Get manually the supplementary table from Lambert et al:
-* url: https://www.cell.com/cell/fulltext/S0092-8674(18)30106-5#supplementaryMaterial
-* File: "Spreadsheet (5.81 MB) Document S1. Tables S1–S4", save as `mmc2.xlsx`
+To annotate TF families, we used data from [Lambert et al., Cell 2018](https://www.cell.com/cell/fulltext/S0092-8674(18)30106-5). 
 
-We will use the supplementary table to annotate TF families:
+The supplementary table of human TF annotations can be retrieved from here:
+* URL: https://www.cell.com/cell/fulltext/S0092-8674(18)30106-5#supplementaryMaterial
+* File: "Spreadsheet (5.81 MB) Document S1. Tables S1–S4"
+
+Save the file as `mmc2.xlsx`. Note that only _Table S1_ is used for annotation. 
+
 ```R
 fams <- read_xlsx("mmc2.xlsx",sheet="Table S1. Related to Figure 1B")
 fams <- as.data.frame(fams[-1,c(2,3)])
@@ -565,7 +545,7 @@ fin <- fin[fin$final.common.TFs!="none",]
 names(fin)[3] <- "TF family"
 ```
 
-We will export all these data into a RDS file for easier plotting in the following session (as well as for data sharing)
+Export the data into a RDS file for easier plotting in the following section (as well as for data sharing):
 ```R
 matricom_patterns <- list(
     nondirectional.patterns=pats,
@@ -588,18 +568,18 @@ saveRDS(matricom_patterns, "matricom_patterns.RDS")
 
 ---
 
-### SECTION 2: PLOTTING
-Load RDS if saved previously, or load the one provided by us, if you directly skipped to this part.
+### Section 2 - DATA VISUALIZATION
+Load the `matrisome_patterns.RDS` files generated in Section 1 or, if you jumped directly to this section, load the file we provide [here](./matricom_patterns.RDS).
 
 ```R
 # Your own, generated from the previous step
 matricom_patterns <- readRDS("matricom_patterns.RDS")
 
-# The one from us
+# Ours
 matricom_patterns <- readRDS("matricom_patterns/matricom_patterns.RDS")
 ```
 
-Plot of the network
+#### Plot of the network
 ```R
 fin.net <- matricom_patterns$nondirectional.patterns
 mt <- matricom_patterns$nondirectional.patterns
@@ -623,7 +603,7 @@ plot(n,
      vertex.color=cols)
 ```
 
-Plot of the matrisome categories
+#### Plot of matrisome categories
 ```R
 m <- matricom_patterns$matrisome.categories
 m$V1 <- gsub("_.*","",m$Group.1)
@@ -645,7 +625,7 @@ corrplot(m, method="color")
 
 *Figure 2. Network and Categories.*
 
-Plot of compartment interactions
+#### Plot of compartment interactions
 ```R
 m1 <- matricom_patterns$compartment.com.tabsap
 m1 <- unique(c(m1$V1,m1$V2))
@@ -662,13 +642,13 @@ chordDiagram(matricom_patterns$compartment.com.tabsap,grid.col = col,col = matri
 col <- col[c(2,4,7)]
 chordDiagram(matricom_patterns$compartment.com.thpa,grid.col = col,col = matricom_patterns$compartment.com.thpa$col)
 ```
-|tasap|thpa|
+|Tabula Sapiens|The Human Protein Atlas|
 |---|---|
 |![](./figs/tabsap.png) |![](./figs/tpha.png)|  
 
 *Figure 3. Compartment interactions.*
 
-Plot of tissue/organ correlation by patterns
+#### Plot of tissue/organ correlation by patterns
 ```R
 p <- matricom_patterns$nondirectional.patterns
 m <- matricom_patterns$patterns.tabsap
@@ -747,13 +727,13 @@ colnames(m) <- factor(colnames(m),levels = c("epithelial","endothelial","stromal
 pheatmap(m,cluster_rows = F,cluster_cols = F,color=c("white","#FE6053"))
 ```
 
-|COL6A1.CD44|CD44.HYAL2|SELP.COL18A1|
+|_COL6A1-CD44_|_CD44-HYAL2_|_SELP-COL18A1_|
 |---|---|---|
 |![](./figs/COL6A1.CD44.png)|![](./figs/CD44.HYAL2.png)|![](./figs/SELP.COL18A1.png)|
 
 *Figure 5. Pleiotropy and specialization*
 
-Plots of TFs and TF families
+#### Plots of TFs and TF families
 ```R
 fin <- matricom_patterns$tfs
 fin.tab <- as.data.frame(table(fin$final.common.TFs))
